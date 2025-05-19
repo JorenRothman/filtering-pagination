@@ -1,58 +1,90 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import React from 'react'
-import { fileURLToPath } from 'url'
 
 import config from '@/payload.config'
 import './styles.css'
+import type { Type } from '@/payload-types'
+import FilterButton from '@/components/filter-button'
 
-export default async function HomePage() {
-  const headers = await getHeaders()
+function displayType(type: number | Type | undefined | null) {
+  if (!type || typeof type === 'number') {
+    return null
+  }
+  return <span>{type.title}</span>
+}
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+async function createArticleWhereQuery(filters: string | string[]): Promise<Where> {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  // If there are no filters return empty object
+  if (!filters) {
+    return {}
+  }
+
+  // Transform filters (type.title) into type objects
+  const filteredType = await payload.find({
+    collection: 'types',
+    where: {
+      title: {
+        in: filters,
+      },
+    },
+  })
+
+  // If no types are found than the filter must be wrong return empty object
+  if (filteredType.totalDocs < 1) {
+    return {}
+  }
+
+  // Get types from query and create an array with only the type IDs
+  const queriedItems = filteredType.docs
+  const queriedItemsID = queriedItems.map((item) => item.id)
+
+  return {
+    types: {
+      in: queriedItemsID,
+    },
+  }
+}
+
+export default async function HomePage({ searchParams }: Props) {
+  const payloadConfig = await config
+  const payload = await getPayload({ config: payloadConfig })
+  const filters = (await searchParams).type || ''
+
+  const articlesQuery = await payload.find({
+    collection: 'articles',
+    limit: 12,
+    depth: 2,
+    where: await createArticleWhereQuery(filters),
+  })
+
+  const typesQuery = await payload.find({
+    collection: 'types',
+  })
+
+  const articles = articlesQuery.docs
+
+  const types = typesQuery.docs
 
   return (
     <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/main/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
-          />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
-        </div>
-      </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
+      <nav>
+        {types.map((type) => (
+          <FilterButton key={type.id} type={type} />
+        ))}
+      </nav>
+      <div>
+        {articles.map((article) => (
+          <article key={article.id}>
+            <h1>{article.title}</h1>
+            <p>Tags: {displayType(article.types)}</p>
+          </article>
+        ))}
       </div>
     </div>
   )
