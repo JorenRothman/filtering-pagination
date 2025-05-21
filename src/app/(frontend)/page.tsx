@@ -113,7 +113,7 @@ export default async function HomePage({ searchParams }: Props) {
           </article>
         ))}
       </div>
-      <LoadMoreButton />
+      {articlesQuery.hasNextPage && <LoadMoreButton />}
     </div>
   )
 }
