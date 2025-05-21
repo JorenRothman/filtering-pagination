@@ -14,7 +14,8 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "seed:types": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/type.ts",
-    "seed:article": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/article.ts"
+    "seed:article": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/article.ts",
+    "seed:media": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/media.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.33.0",

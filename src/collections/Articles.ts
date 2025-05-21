@@ -8,6 +8,12 @@ export const Articles: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
+    },
+    {
       name: 'types',
       type: 'relationship',
       relationTo: 'types',

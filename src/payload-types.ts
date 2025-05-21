@@ -160,6 +160,7 @@ export interface Media {
 export interface Article {
   id: number;
   title?: string | null;
+  image: number | Media;
   types?: (number | null) | Type;
   updatedAt: string;
   createdAt: string;
@@ -278,6 +279,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface ArticlesSelect<T extends boolean = true> {
   title?: T;
+  image?: T;
   types?: T;
   updatedAt?: T;
   createdAt?: T;

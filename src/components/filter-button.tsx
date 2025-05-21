@@ -19,6 +19,11 @@ export default function FilterButton({ type }: Props) {
     const operation = currentFilters.includes(type.title) ? 'delete' : 'append'
     searchParams[operation]('type', type.title)
 
+    // Delete page param if filters change
+    if (searchParams.get('page')) {
+      searchParams.delete('page')
+    }
+
     router.push(pathname + '?' + searchParams.toString())
   }
 
