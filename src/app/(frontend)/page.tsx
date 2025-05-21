@@ -8,69 +8,8 @@ import FilterButton from '@/components/filter-button'
 import Image from 'next/image'
 import LoadMoreButton from '@/components/load-more-button'
 
-function displayType(type: number | Type | undefined | null) {
-  if (!type || typeof type === 'number') {
-    return null
-  }
-  return <span>{type.title}</span>
-}
-
-function ImageComponent({ image }: { image: number | Media }) {
-  if (typeof image === 'number') {
-    return null
-  }
-
-  if (!image.url) {
-    return null
-  }
-
-  return (
-    <Image
-      style={{ width: '100%' }}
-      src={image.url}
-      alt={image.alt}
-      width={image.width || 800}
-      height={image.height || 600}
-    />
-  )
-}
 interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-async function createArticleWhereQuery(filters: string | string[]): Promise<Where> {
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-
-  // If there are no filters return empty object
-  if (!filters) {
-    return {}
-  }
-
-  // Transform filters (type.title) into type objects
-  const filteredType = await payload.find({
-    collection: 'types',
-    where: {
-      title: {
-        in: filters,
-      },
-    },
-  })
-
-  // If no types are found than the filter must be wrong return empty object
-  if (filteredType.totalDocs < 1) {
-    return {}
-  }
-
-  // Get types from query and create an array with only the type IDs
-  const queriedItems = filteredType.docs
-  const queriedItemsID = queriedItems.map((item) => item.id)
-
-  return {
-    types: {
-      in: queriedItemsID,
-    },
-  }
 }
 
 export default async function HomePage({ searchParams }: Props) {
@@ -115,5 +54,67 @@ export default async function HomePage({ searchParams }: Props) {
       </div>
       {articlesQuery.hasNextPage && <LoadMoreButton />}
     </div>
+  )
+}
+
+async function createArticleWhereQuery(filters: string | string[]): Promise<Where> {
+  const payloadConfig = await config
+  const payload = await getPayload({ config: payloadConfig })
+
+  // If there are no filters return empty object
+  if (!filters) {
+    return {}
+  }
+
+  // Transform filters (type.title) into type objects
+  const filteredType = await payload.find({
+    collection: 'types',
+    where: {
+      title: {
+        in: filters,
+      },
+    },
+  })
+
+  // If no types are found than the filter must be wrong return empty object
+  if (filteredType.totalDocs < 1) {
+    return {}
+  }
+
+  // Get types from query and create an array with only the type IDs
+  const queriedItems = filteredType.docs
+  const queriedItemsID = queriedItems.map((item) => item.id)
+
+  return {
+    types: {
+      in: queriedItemsID,
+    },
+  }
+}
+
+function displayType(type: number | Type | undefined | null) {
+  if (!type || typeof type === 'number') {
+    return null
+  }
+  return <span>{type.title}</span>
+}
+
+function ImageComponent({ image }: { image: number | Media }) {
+  if (typeof image === 'number') {
+    return null
+  }
+
+  if (!image.url) {
+    return null
+  }
+
+  return (
+    <Image
+      style={{ width: '100%' }}
+      src={image.url}
+      alt={image.alt}
+      width={image.width || 800}
+      height={image.height || 600}
+    />
   )
 }
