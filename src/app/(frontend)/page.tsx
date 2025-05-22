@@ -1,5 +1,5 @@
 import { getPayload, type Where } from 'payload'
-import React from 'react'
+import React, { cache } from 'react'
 
 import config from '@/payload.config'
 import './styles.css'
@@ -13,27 +13,14 @@ interface Props {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
   const filters = (await searchParams).type || ''
   const page = Number.parseInt((await searchParams).page as string) || 1
 
-  const articlesQuery = await payload.find({
-    collection: 'articles',
-    limit: 12 * page,
-    depth: 2,
+  const { types } = await getTypes()
+  const { articles, hasNextPage } = await getArticles({
     where: await createArticleWhereQuery(filters),
+    page,
   })
-
-  console.log(articlesQuery)
-
-  const typesQuery = await payload.find({
-    collection: 'types',
-  })
-
-  const articles = articlesQuery.docs
-
-  const types = typesQuery.docs
 
   return (
     <div className="home">
@@ -52,14 +39,26 @@ export default async function HomePage({ searchParams }: Props) {
           </article>
         ))}
       </div>
-      {articlesQuery.hasNextPage && <LoadMoreButton />}
+      {hasNextPage && <LoadMoreButton />}
     </div>
   )
 }
 
-async function createArticleWhereQuery(filters: string | string[]): Promise<Where> {
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
+const getArticles = cache(async ({ where, page }: { where: Where; page: number }) => {
+  const payload = await getPayload({ config: await config })
+
+  const articles = await payload.find({
+    collection: 'articles',
+    limit: 12 * page,
+    depth: 2,
+    where,
+  })
+
+  return { articles: articles.docs || null, hasNextPage: articles.hasNextPage }
+})
+
+const createArticleWhereQuery = cache(async (filters: string | string[]): Promise<Where> => {
+  const payload = await getPayload({ config: await config })
 
   // If there are no filters return empty object
   if (!filters) {
@@ -90,7 +89,17 @@ async function createArticleWhereQuery(filters: string | string[]): Promise<Wher
       in: queriedItemsID,
     },
   }
-}
+})
+
+const getTypes = cache(async () => {
+  const payload = await getPayload({ config: await config })
+
+  const types = await payload.find({
+    collection: 'types',
+  })
+
+  return { types: types.docs }
+})
 
 function displayType(type: number | Type | undefined | null) {
   if (!type || typeof type === 'number') {
