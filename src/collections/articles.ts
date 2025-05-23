@@ -1,11 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
-export const Articles: CollectionConfig = {
+export const articles: CollectionConfig = {
   slug: 'articles',
   fields: [
     {
       name: 'title',
       type: 'text',
+    },
+    {
+      name: 'text',
+      type: 'richText',
     },
     {
       name: 'image',

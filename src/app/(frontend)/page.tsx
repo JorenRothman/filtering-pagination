@@ -3,11 +3,9 @@ import React, { cache } from 'react'
 
 import config from '@/payload.config'
 import './styles.css'
-import type { Media, Type } from '@/payload-types'
 import FilterButton from '@/components/filter-button'
-import Image from 'next/image'
 import LoadMoreButton from '@/components/load-more-button'
-
+import Article from '@/components/article'
 interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
@@ -30,13 +28,8 @@ export default async function HomePage({ searchParams }: Props) {
         ))}
       </nav>
       <div>
-        {articles.map((article, index) => (
-          <article key={article.id}>
-            <p>Order: {index}</p>
-            <ImageComponent image={article.image} />
-            <h4>{article.title}</h4>
-            <p>Tags: {displayType(article.types)}</p>
-          </article>
+        {articles.map((article) => (
+          <Article key={article.id} article={article} />
         ))}
       </div>
       {hasNextPage && <LoadMoreButton />}
@@ -100,30 +93,3 @@ const getTypes = cache(async () => {
 
   return { types: types.docs }
 })
-
-function displayType(type: number | Type | undefined | null) {
-  if (!type || typeof type === 'number') {
-    return null
-  }
-  return <span>{type.title}</span>
-}
-
-function ImageComponent({ image }: { image: number | Media }) {
-  if (typeof image === 'number') {
-    return null
-  }
-
-  if (!image.url) {
-    return null
-  }
-
-  return (
-    <Image
-      style={{ width: '100%' }}
-      src={image.url}
-      alt={image.alt}
-      width={image.width || 800}
-      height={image.height || 600}
-    />
-  )
-}
